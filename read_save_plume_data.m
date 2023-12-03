@@ -9,14 +9,13 @@ for ii = 1:length(filename)
 
     formatSpec = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%[^\n\r]';
 
-    % 打开文本文件。
+    % Open file
     fileID = fopen([filepath,filename_tmp],'r');
     dataArray = textscan(fileID, formatSpec, 'Delimiter', delimiter, 'MultipleDelimsAsOne', true, 'TextType', 'string',  'ReturnOnError', false);
 
-    % 关闭文本文件。
+    % Close file
     fclose(fileID);
 
-    % 将包含数值文本的列内容转换为数值。将非数值文本替换为 NaN。
     raw = repmat({''},length(dataArray{1}),length(dataArray)-1);
     for col=1:length(dataArray)-1
         raw(1:length(dataArray{col}),col) = mat2cell(dataArray{col}, ones(length(dataArray{col}), 1));
@@ -24,16 +23,15 @@ for ii = 1:length(filename)
     numericData = NaN(size(dataArray{1},1),size(dataArray,2));
 
     for col=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
-        % 将输入元胞数组中的文本转换为数值。已将非数值文本替换为 NaN。
+
         rawData = dataArray{col};
         for row=1:size(rawData, 1)
-            % 创建正则表达式以检测并删除非数值前缀和后缀。
+    
             regexstr = '(?<prefix>.*?)(?<numbers>([-]*(\d+[\,]*)+[\.]{0,1}\d*[eEdD]{0,1}[-+]*\d*[i]{0,1})|([-]*(\d+[\,]*)*[\.]{1,1}\d+[eEdD]{0,1}[-+]*\d*[i]{0,1}))(?<suffix>.*)';
             try
                 result = regexp(rawData(row), regexstr, 'names');
                 numbers = result.numbers;
 
-                % 在非千位位置中检测到逗号。
                 invalidThousandsSeparator = false;
                 if numbers.contains(',')
                     thousandsRegExp = '^\d+?(\,\d{3})*\.{0,1}\d*$';
@@ -42,7 +40,7 @@ for ii = 1:length(filename)
                         invalidThousandsSeparator = true;
                     end
                 end
-                % 将数值文本转换为数值。
+
                 if ~invalidThousandsSeparator
                     numbers = textscan(char(strrep(numbers, ',', '')), '%f');
                     numericData(row, col) = numbers{1};
@@ -54,19 +52,15 @@ for ii = 1:length(filename)
         end
     end
 
-    % 将非数值元胞替换为 NaN
-    R = cellfun(@(x) ~isnumeric(x) && ~islogical(x),raw); % 查找非数值元胞
-    raw(R) = {NaN}; % 替换非数值元胞
+    R = cellfun(@(x) ~isnumeric(x) && ~islogical(x),raw);
+    raw(R) = {NaN};
 
-    % 创建输出变量
     Plumes = cell2mat(raw);
-    % 清除临时变量
     clearvars delimiter formatSpec fileID dataArray ans raw col numericData rawData row regexstr result numbers invalidThousandsSeparator thousandsRegExp R;
     
     record_num = Plumes(end,1);
     if ~isnan(record_num)
         Plumes_data = Plumes(end - record_num + 1:end,1:end-2);
-        %初始化变量。
         delimiter = ' ';
         formatSpec = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%[^\n\r]';
         fileID = fopen([filepath,filename_tmp],'r');
