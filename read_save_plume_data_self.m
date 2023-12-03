@@ -10,14 +10,13 @@ for ii = 1:length(filename)
 
     formatSpec = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%[^\n\r]';
 
-    % ´ò¿ªÎÄ±¾ÎÄ¼ş¡£
+    % Open file
     fileID = fopen([filepath,filename_tmp],'r');
     dataArray = textscan(fileID, formatSpec, 'Delimiter', delimiter, 'MultipleDelimsAsOne', true, 'TextType', 'string',  'ReturnOnError', false);
 
-    % ¹Ø±ÕÎÄ±¾ÎÄ¼ş¡£
+    % Close file
     fclose(fileID);
 
-    % ½«°üº¬ÊıÖµÎÄ±¾µÄÁĞÄÚÈİ×ª»»ÎªÊıÖµ¡£½«·ÇÊıÖµÎÄ±¾Ìæ»»Îª NaN¡£
     raw = repmat({''},length(dataArray{1}),length(dataArray)-1);
     for col=1:length(dataArray)-1
         raw(1:length(dataArray{col}),col) = mat2cell(dataArray{col}, ones(length(dataArray{col}), 1));
@@ -25,16 +24,13 @@ for ii = 1:length(filename)
     numericData = NaN(size(dataArray{1},1),size(dataArray,2));
 
     for col=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
-        % ½«ÊäÈëÔª°ûÊı×éÖĞµÄÎÄ±¾×ª»»ÎªÊıÖµ¡£ÒÑ½«·ÇÊıÖµÎÄ±¾Ìæ»»Îª NaN¡£
         rawData = dataArray{col};
         for row=1:size(rawData, 1)
-            % ´´½¨ÕıÔò±í´ïÊ½ÒÔ¼ì²â²¢É¾³ı·ÇÊıÖµÇ°×ººÍºó×º¡£
             regexstr = '(?<prefix>.*?)(?<numbers>([-]*(\d+[\,]*)+[\.]{0,1}\d*[eEdD]{0,1}[-+]*\d*[i]{0,1})|([-]*(\d+[\,]*)*[\.]{1,1}\d+[eEdD]{0,1}[-+]*\d*[i]{0,1}))(?<suffix>.*)';
             try
                 result = regexp(rawData(row), regexstr, 'names');
                 numbers = result.numbers;
 
-                % ÔÚ·ÇÇ§Î»Î»ÖÃÖĞ¼ì²âµ½¶ººÅ¡£
                 invalidThousandsSeparator = false;
                 if numbers.contains(',')
                     thousandsRegExp = '^\d+?(\,\d{3})*\.{0,1}\d*$';
@@ -42,8 +38,7 @@ for ii = 1:length(filename)
                         numbers = NaN;
                         invalidThousandsSeparator = true;
                     end
-                end
-                % ½«ÊıÖµÎÄ±¾×ª»»ÎªÊıÖµ¡£
+                endã€‚
                 if ~invalidThousandsSeparator
                     numbers = textscan(char(strrep(numbers, ',', '')), '%f');
                     numericData(row, col) = numbers{1};
@@ -56,19 +51,17 @@ for ii = 1:length(filename)
     end
 
 
-    %% ½«·ÇÊıÖµÔª°ûÌæ»»Îª NaN
-    R = cellfun(@(x) ~isnumeric(x) && ~islogical(x),raw); % ²éÕÒ·ÇÊıÖµÔª°û
-    raw(R) = {NaN}; % Ìæ»»·ÇÊıÖµÔª°û
+    R = cellfun(@(x) ~isnumeric(x) && ~islogical(x),raw);
+    raw(R) = {NaN};
 
-    % ´´½¨Êä³ö±äÁ¿
+    % Create output variables
     Plumes = cell2mat(raw);
-    % Çå³ıÁÙÊ±±äÁ¿
+    % Clear variables
     clearvars delimiter formatSpec fileID dataArray ans raw col numericData rawData row regexstr result numbers invalidThousandsSeparator thousandsRegExp R;
     
     record_num = Plumes(end,1);
     if ~isnan(record_num)
         Plumes_data = Plumes(end - record_num + 1:end,1:end-2);
-        %³õÊ¼»¯±äÁ¿¡£
         delimiter = ' ';
         formatSpec = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%[^\n\r]';
         fileID = fopen([filepath,filename_tmp],'r');
